@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">ShoppingList</string>
+    <string name="compras_en_familia">Compras en Familia</string>
+    <string name="email">Email</string>
+    <string name="password">Contraseña</string>
+    <string name="iniciar_sesion">Iniciar Sesión</string>
+    <string name="registrarse">Registrarse</string>
+    <string name="olvidaste_password">¿Olvidaste tu contraseña?</string>
+    <string name="mi_lista_de_compras">Mi Lista de Compras</string>
+    <string name="pendientes">PENDIENTES</string>
+    <string name="comprados">COMPRADOS</string>
+    <string name="mi_perfil">Mi Perfil</string>
+    <string name="miembro_desde">Miembro desde Octubre 2025</string>
+    <string name="estadisticas">Estadísticas</string>
+    <string name="productos_agregados">Productos\nAgregados</string>
+    <string name="productos_comprados">Productos\nComprados</string>
+    <string name="limpiar_productos">Limpiar Productos Comprados</string>
+    <string name="cerrar_sesion">Cerrar Sesión</string>
+</resources>
