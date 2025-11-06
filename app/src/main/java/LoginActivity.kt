@@ -2,14 +2,12 @@ package com.example.shoppinglist
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,14 +23,15 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Verificar si ya hay un usuario logueado
-        if (firebaseRepository.getCurrentUser() != null) {
-            goToMainActivity()
-            return
-        }
-
         setContentView(R.layout.activity_login)
+
+        // Solo verificar si hay usuario SI NO venimos de un logout
+        if (!intent.getBooleanExtra("FROM_LOGOUT", false)) {
+            if (firebaseRepository.getCurrentUser() != null) {
+                goToMainActivity()
+                return
+            }
+        }
 
         emailEditText = findViewById(R.id.emailEditText)
         passwordEditText = findViewById(R.id.passwordEditText)
@@ -56,7 +55,6 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun loginUser(email: String, password: String) {
-        // Deshabilitar botón y mostrar progreso
         loginButton.isEnabled = false
         loginButton.text = "Iniciando sesión..."
 
@@ -66,7 +64,6 @@ class LoginActivity : AppCompatActivity() {
                     firebaseRepository.loginUser(email, password)
                 }
 
-                // Volver al hilo principal para actualizar UI
                 withContext(Dispatchers.Main) {
                     result.onSuccess {
                         Toast.makeText(

@@ -14,6 +14,7 @@ import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -22,6 +23,10 @@ class ProfileActivity : AppCompatActivity() {
 
     private val firebaseRepository = FirebaseRepository()
     private lateinit var pieChart: PieChart
+
+    // IMPORTANTE: Jobs para cancelar los listeners
+    private var userDataJob: Job? = null
+    private var statsJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +47,7 @@ class ProfileActivity : AppCompatActivity() {
         userEmail.text = firebaseRepository.getCurrentUser()?.email ?: "usuario@ejemplo.com"
 
         // Observar datos del usuario
-        lifecycleScope.launch {
+        userDataJob = lifecycleScope.launch {
             firebaseRepository.getUserData().collect { user ->
                 user?.let {
                     userName.text = it.displayName.ifEmpty { "Usuario" }
@@ -55,7 +60,7 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         // Observar estadísticas
-        lifecycleScope.launch {
+        statsJob = lifecycleScope.launch {
             firebaseRepository.getUserStats().collect { (added, completed) ->
                 addedCount.text = added.toString()
                 completedCount.text = completed.toString()
@@ -77,22 +82,49 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.logoutButton).setOnClickListener {
-            // Cerrar sesión
-            firebaseRepository.signOut()
-
-            // Ir a LoginActivity y limpiar el stack
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
+            logout()
         }
     }
 
-    private fun updatePieChart(added: Int, completed: Int) {
-        val pending = added - completed
+    private fun logout() {
+        try {
+            // IMPORTANTE: Cancelar todos los listeners ANTES de cerrar sesión
+            userDataJob?.cancel()
+            statsJob?.cancel()
 
+            // Cerrar sesión de Firebase
+            firebaseRepository.signOut()
+
+            // Crear intent para LoginActivity
+            val intent = Intent(this@ProfileActivity, LoginActivity::class.java).apply {
+                putExtra("FROM_LOGOUT", true)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+
+            // Iniciar LoginActivity
+            startActivity(intent)
+
+            // Terminar esta actividad
+            finish()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(
+                this@ProfileActivity,
+                "Error al cerrar sesión: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Limpiar los jobs cuando se destruye la actividad
+        userDataJob?.cancel()
+        statsJob?.cancel()
+    }
+
+    private fun updatePieChart(added: Int, completed: Int) {
         if (added == 0) {
-            // No hay datos
             pieChart.clear()
             pieChart.setNoDataText("No hay datos aún")
             pieChart.invalidate()
@@ -101,35 +133,36 @@ class ProfileActivity : AppCompatActivity() {
 
         val entries = ArrayList<PieEntry>()
 
-        if (completed > 0) {
-            entries.add(PieEntry(completed.toFloat(), "Completados"))
-        }
-        if (pending > 0) {
-            entries.add(PieEntry(pending.toFloat(), "Pendientes"))
-        }
+        // Siempre mostrar ambos valores
+        entries.add(PieEntry(added.toFloat(), "Agregados ($added)"))
+        entries.add(PieEntry(completed.toFloat(), "Comprados ($completed)"))
 
-        val dataSet = PieDataSet(entries, "")
+        val dataSet = PieDataSet(entries, "Estadísticas de Compras")
         dataSet.colors = listOf(
-            Color.parseColor("#FF9800"), // Orange para completados
-            Color.parseColor("#4CAF50")  // Green para pendientes
+            Color.parseColor("#4CAF50"),  // Verde para agregados
+            Color.parseColor("#FF9800")   // Naranja para comprados
         )
-        dataSet.valueTextSize = 14f
+        dataSet.valueTextSize = 16f
         dataSet.valueTextColor = Color.WHITE
+        dataSet.sliceSpace = 3f
 
         val data = PieData(dataSet)
         data.setValueFormatter(PercentFormatter(pieChart))
 
         pieChart.data = data
         pieChart.description.isEnabled = false
+        pieChart.centerText = "Total\n${added + completed}"
+        pieChart.setCenterTextSize(18f)
         pieChart.isDrawHoleEnabled = true
         pieChart.setHoleColor(Color.WHITE)
         pieChart.holeRadius = 40f
         pieChart.transparentCircleRadius = 45f
         pieChart.setDrawEntryLabels(true)
         pieChart.setEntryLabelColor(Color.BLACK)
-        pieChart.setEntryLabelTextSize(12f)
+        pieChart.setEntryLabelTextSize(11f)
         pieChart.animateY(1000)
         pieChart.legend.isEnabled = true
+        pieChart.legend.textSize = 12f
         pieChart.setUsePercentValues(true)
 
         pieChart.invalidate()

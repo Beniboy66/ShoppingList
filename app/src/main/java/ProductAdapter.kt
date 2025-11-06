@@ -30,6 +30,7 @@ class ProductAdapter(
         private val productName: TextView = itemView.findViewById(R.id.productName)
         private val productQuantity: TextView = itemView.findViewById(R.id.productQuantity)
         private val productCategory: TextView = itemView.findViewById(R.id.productCategory)
+        private val productCreator: TextView = itemView.findViewById(R.id.productCreator)
         private val deleteButton: ImageButton = itemView.findViewById(R.id.deleteButton)
 
         fun bind(product: Product) {
@@ -37,6 +38,14 @@ class ProductAdapter(
             productQuantity.text = product.quantity
             productCategory.text = product.category
             checkBox.isChecked = product.isCompleted
+
+            // Mostrar quién agregó el producto
+            if (product.createdByEmail.isNotEmpty()) {
+                productCreator.visibility = View.VISIBLE
+                productCreator.text = "Agregado por: ${product.createdByEmail}"
+            } else {
+                productCreator.visibility = View.GONE
+            }
 
             checkBox.setOnCheckedChangeListener { _, isChecked ->
                 onProductClick(product.copy(isCompleted = isChecked))

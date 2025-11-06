@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,8 +27,7 @@ class MainActivity : AppCompatActivity() {
 
         // Verificar autenticación
         if (firebaseRepository.getCurrentUser() == null) {
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
+            goToLogin()
             return
         }
 
@@ -41,6 +41,14 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener {
             showAddProductDialog()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Verificar si el usuario sigue autenticado
+        if (firebaseRepository.getCurrentUser() == null) {
+            goToLogin()
         }
     }
 
@@ -95,7 +103,6 @@ class MainActivity : AppCompatActivity() {
 
                 if (name.isNotEmpty()) {
                     val product = Product(
-                        id = System.currentTimeMillis().toInt(),
                         name = name,
                         quantity = quantity.ifEmpty { "1 unidad" },
                         category = category.ifEmpty { "General" },
@@ -110,19 +117,40 @@ class MainActivity : AppCompatActivity() {
 
     private fun insertProduct(product: Product) {
         lifecycleScope.launch {
-            firebaseRepository.insertProduct(product)
+            val result = firebaseRepository.insertProduct(product)
+            result.onFailure {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Error al agregar producto: ${it.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
     private fun updateProduct(product: Product) {
         lifecycleScope.launch {
-            firebaseRepository.updateProduct(product)
+            val result = firebaseRepository.updateProduct(product)
+            result.onFailure {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Error al actualizar producto: ${it.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
     private fun deleteProduct(product: Product) {
         lifecycleScope.launch {
-            firebaseRepository.deleteProduct(product)
+            val result = firebaseRepository.deleteProduct(product)
+            result.onFailure {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Error al eliminar producto: ${it.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
@@ -139,5 +167,12 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun goToLogin() {
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 }
