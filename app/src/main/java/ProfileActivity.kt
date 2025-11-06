@@ -5,12 +5,13 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.launch
 
 class ProfileActivity : AppCompatActivity() {
 
-    private lateinit var viewModel: ProductViewModel
+    private val firebaseRepository = FirebaseRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,24 +21,29 @@ class ProfileActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
 
-        viewModel = ViewModelProvider(this)[ProductViewModel::class.java]
-
         val addedCount = findViewById<TextView>(R.id.addedCount)
         val completedCount = findViewById<TextView>(R.id.completedCount)
+        val userEmail = findViewById<TextView>(R.id.userEmail)
 
-        viewModel.pendingCount.observe(this) { count ->
-            addedCount.text = count.toString()
-        }
+        // Mostrar email del usuario
+        userEmail.text = firebaseRepository.getCurrentUser()?.email ?: "usuario@ejemplo.com"
 
-        viewModel.completedCount.observe(this) { count ->
-            completedCount.text = count.toString()
+        // Observar estadísticas
+        lifecycleScope.launch {
+            firebaseRepository.getUserStats().collect { (added, completed) ->
+                addedCount.text = added.toString()
+                completedCount.text = completed.toString()
+            }
         }
 
         findViewById<Button>(R.id.clearCompletedButton).setOnClickListener {
-            viewModel.deleteAllCompleted()
+            lifecycleScope.launch {
+                firebaseRepository.deleteAllCompleted()
+            }
         }
 
         findViewById<Button>(R.id.logoutButton).setOnClickListener {
+            firebaseRepository.signOut()
             startActivity(Intent(this, LoginActivity::class.java))
             finishAffinity()
         }

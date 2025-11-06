@@ -7,27 +7,34 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var viewModel: ProductViewModel
+    private val firebaseRepository = FirebaseRepository()
     private lateinit var pendingAdapter: ProductAdapter
     private lateinit var completedAdapter: ProductAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Verificar autenticación
+        if (firebaseRepository.getCurrentUser() == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_main)
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
-
-        viewModel = ViewModelProvider(this)[ProductViewModel::class.java]
 
         setupRecyclerViews()
         observeProducts()
@@ -39,13 +46,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecyclerViews() {
         pendingAdapter = ProductAdapter(
-            onProductClick = { product -> viewModel.update(product) },
-            onDeleteClick = { product -> viewModel.delete(product) }
+            onProductClick = { product -> updateProduct(product) },
+            onDeleteClick = { product -> deleteProduct(product) }
         )
 
         completedAdapter = ProductAdapter(
-            onProductClick = { product -> viewModel.update(product) },
-            onDeleteClick = { product -> viewModel.delete(product) }
+            onProductClick = { product -> updateProduct(product) },
+            onDeleteClick = { product -> deleteProduct(product) }
         )
 
         findViewById<RecyclerView>(R.id.pendingRecyclerView).apply {
@@ -60,12 +67,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeProducts() {
-        viewModel.pendingProducts.observe(this) { products ->
-            pendingAdapter.submitList(products)
+        lifecycleScope.launch {
+            firebaseRepository.getProducts(false).collect { products ->
+                pendingAdapter.submitList(products)
+            }
         }
 
-        viewModel.completedProducts.observe(this) { products ->
-            completedAdapter.submitList(products)
+        lifecycleScope.launch {
+            firebaseRepository.getProducts(true).collect { products ->
+                completedAdapter.submitList(products)
+            }
         }
     }
 
@@ -84,15 +95,35 @@ class MainActivity : AppCompatActivity() {
 
                 if (name.isNotEmpty()) {
                     val product = Product(
+                        id = System.currentTimeMillis().toInt(),
                         name = name,
                         quantity = quantity.ifEmpty { "1 unidad" },
-                        category = category.ifEmpty { "General" }
+                        category = category.ifEmpty { "General" },
+                        isCompleted = false
                     )
-                    viewModel.insert(product)
+                    insertProduct(product)
                 }
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    private fun insertProduct(product: Product) {
+        lifecycleScope.launch {
+            firebaseRepository.insertProduct(product)
+        }
+    }
+
+    private fun updateProduct(product: Product) {
+        lifecycleScope.launch {
+            firebaseRepository.updateProduct(product)
+        }
+    }
+
+    private fun deleteProduct(product: Product) {
+        lifecycleScope.launch {
+            firebaseRepository.deleteProduct(product)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
