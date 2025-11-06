@@ -29,6 +29,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Tarjeta de Perfil -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -52,7 +53,7 @@
                         android:id="@+id/userName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Juan Pérez"
+                        android:text="Cargando..."
                         android:textSize="22sp"
                         android:textStyle="bold"
                         android:layout_marginTop="12dp"/>
@@ -67,6 +68,7 @@
                         android:layout_marginTop="4dp"/>
 
                     <TextView
+                        android:id="@+id/memberSince"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/miembro_desde"
@@ -78,6 +80,7 @@
 
             </androidx.cardview.widget.CardView>
 
+            <!-- Tarjeta de Estadísticas Numéricas -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -119,7 +122,7 @@
                                 android:id="@+id/addedCount"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="24"
+                                android:text="0"
                                 android:textSize="32sp"
                                 android:textStyle="bold"
                                 android:textColor="@color/green_primary"/>
@@ -148,7 +151,7 @@
                                 android:id="@+id/completedCount"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="18"
+                                android:text="0"
                                 android:textSize="32sp"
                                 android:textStyle="bold"
                                 android:textColor="@color/orange"/>
@@ -169,6 +172,38 @@
 
             </androidx.cardview.widget.CardView>
 
+            <!-- Tarjeta de Gráfico -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📈 Progreso"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp"/>
+
+                    <com.github.mikephil.charting.charts.PieChart
+                        android:id="@+id/pieChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="250dp"/>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Botones -->
             <Button
                 android:id="@+id/clearCompletedButton"
                 android:layout_width="match_parent"

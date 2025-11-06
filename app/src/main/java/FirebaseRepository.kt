@@ -64,7 +64,6 @@ class FirebaseRepository {
             .document(userId)
             .collection("products")
             .whereEqualTo("completed", completed)
-            .orderBy("id", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -73,7 +72,7 @@ class FirebaseRepository {
 
                 val products = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(Product::class.java)
-                } ?: emptyList()
+                }?.sortedByDescending { it.id } ?: emptyList()
 
                 trySend(products)
             }
@@ -222,6 +221,26 @@ class FirebaseRepository {
                 val completed = snapshot?.getLong("productsCompleted")?.toInt() ?: 0
 
                 trySend(Pair(added, completed))
+            }
+
+        awaitClose { listener.remove() }
+    }
+    fun getUserData(): Flow<User?> = callbackFlow {
+        val userId = getCurrentUser()?.uid ?: run {
+            close()
+            return@callbackFlow
+        }
+
+        val listener = firestore.collection("users")
+            .document(userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                val user = snapshot?.toObject(User::class.java)
+                trySend(user)
             }
 
         awaitClose { listener.remove() }
