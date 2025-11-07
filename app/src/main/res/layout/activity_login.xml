@@ -105,13 +105,7 @@
                 android:background="@drawable/button_outline_green"
                 android:layout_marginBottom="16dp"/>
 
-            <TextView
-                android:id="@+id/forgotPasswordText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/olvidaste_password"
-                android:textSize="14sp"
-                android:textColor="@color/gray_dark"/>
+
 
         </LinearLayout>
 
