@@ -134,10 +134,10 @@ class ProfileActivity : AppCompatActivity() {
         val entries = ArrayList<PieEntry>()
 
         // Siempre mostrar ambos valores
-        entries.add(PieEntry(added.toFloat(), "Agregados ($added)"))
-        entries.add(PieEntry(completed.toFloat(), "Comprados ($completed)"))
+        entries.add(PieEntry(added.toFloat(), "Agregados"))
+        entries.add(PieEntry(completed.toFloat(), "Comprados"))
 
-        val dataSet = PieDataSet(entries, "Estadísticas de Compras")
+        val dataSet = PieDataSet(entries, "")  // Título vacío
         dataSet.colors = listOf(
             Color.parseColor("#4CAF50"),  // Verde para agregados
             Color.parseColor("#FF9800")   // Naranja para comprados
@@ -151,20 +151,56 @@ class ProfileActivity : AppCompatActivity() {
 
         pieChart.data = data
         pieChart.description.isEnabled = false
+
+        // Configurar texto del centro
         pieChart.centerText = "Total\n${added + completed}"
         pieChart.setCenterTextSize(18f)
+        pieChart.setCenterTextColor(Color.BLACK)
+
         pieChart.isDrawHoleEnabled = true
         pieChart.setHoleColor(Color.WHITE)
         pieChart.holeRadius = 40f
         pieChart.transparentCircleRadius = 45f
-        pieChart.setDrawEntryLabels(true)
-        pieChart.setEntryLabelColor(Color.BLACK)
-        pieChart.setEntryLabelTextSize(11f)
-        pieChart.animateY(1000)
-        pieChart.legend.isEnabled = true
-        pieChart.legend.textSize = 12f
-        pieChart.setUsePercentValues(true)
 
+        // Configurar etiquetas de entrada
+        pieChart.setDrawEntryLabels(false)  // Desactivar etiquetas en el gráfico
+
+        // Configurar la leyenda
+        val legend = pieChart.legend
+        legend.isEnabled = true
+        legend.verticalAlignment = com.github.mikephil.charting.components.Legend.LegendVerticalAlignment.BOTTOM
+        legend.horizontalAlignment = com.github.mikephil.charting.components.Legend.LegendHorizontalAlignment.CENTER
+        legend.orientation = com.github.mikephil.charting.components.Legend.LegendOrientation.HORIZONTAL
+        legend.setDrawInside(false)
+        legend.textSize = 12f
+        legend.textColor = Color.BLACK
+        legend.xEntrySpace = 20f  // Espacio horizontal entre items
+        legend.yEntrySpace = 8f   // Espacio vertical
+        legend.formSize = 12f     // Tamaño del cuadro de color
+        legend.form = com.github.mikephil.charting.components.Legend.LegendForm.CIRCLE
+
+        // Personalizar el texto de la leyenda
+        legend.setCustom(listOf(
+            com.github.mikephil.charting.components.LegendEntry(
+                "Agregados: $added",
+                com.github.mikephil.charting.components.Legend.LegendForm.CIRCLE,
+                12f,
+                2f,
+                null,
+                Color.parseColor("#4CAF50")
+            ),
+            com.github.mikephil.charting.components.LegendEntry(
+                "Comprados: $completed",
+                com.github.mikephil.charting.components.Legend.LegendForm.CIRCLE,
+                12f,
+                2f,
+                null,
+                Color.parseColor("#FF9800")
+            )
+        ))
+
+        pieChart.setUsePercentValues(true)
+        pieChart.animateY(1000)
         pieChart.invalidate()
     }
 }
